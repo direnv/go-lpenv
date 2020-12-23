@@ -90,13 +90,7 @@ func (test lookPathTest) runProg(t *testing.T, env []string, args ...string) (st
 	for len(p) > 0 && (p[len(p)-1] == '\n' || p[len(p)-1] == '\r') {
 		p = p[:len(p)-1]
 	}
-	if !filepath.IsAbs(p) {
-		return p, nil
-	}
-	if p[:len(test.rootDir)] != test.rootDir {
-		t.Fatalf("test=%+v: %s output is wrong: %q must have %q prefix", test, cmdText, p, test.rootDir)
-	}
-	return p[len(test.rootDir)+1:], nil
+	return p, nil
 }
 
 func updateEnv(env []string, name, value string) []string {
@@ -143,7 +137,7 @@ func (test lookPathTest) run(t *testing.T, tmpdir, printpathExe string) {
 	// Compare results.
 	if errCmd == nil && errLP == nil {
 		// both succeeded
-		if should != have {
+		if strings.ToLower(should) != strings.ToLower(have) {
 			t.Errorf("test=%+v failed: expected to find %q, but found %q", test, should, have)
 		}
 		return
@@ -153,10 +147,10 @@ func (test lookPathTest) run(t *testing.T, tmpdir, printpathExe string) {
 		return
 	}
 	if errCmd != nil {
-		t.Error(errCmd)
+		t.Errorf("test=%+v failed: test setup failed with %v", test, errCmd)
 	}
 	if errLP != nil {
-		t.Error(errLP)
+		t.Errorf("test=%+v failed: expected to find %q, but got error %v", test, should, errLP)
 	}
 }
 
