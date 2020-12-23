@@ -4,7 +4,7 @@
 
 // +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
 
-package exec
+package lpenv
 
 import (
 	"io/ioutil"

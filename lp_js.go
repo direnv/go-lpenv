@@ -4,7 +4,7 @@
 
 // +build js,wasm
 
-package exec
+package lpenv
 
 import (
 	"errors"

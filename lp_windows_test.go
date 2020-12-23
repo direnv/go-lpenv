@@ -5,7 +5,7 @@
 // Use an external test to avoid os/exec -> internal/testenv -> os/exec
 // circular dependency.
 
-package exec_test
+package lpenv_test
 
 import (
 	"fmt"

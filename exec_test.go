@@ -5,13 +5,15 @@
 // Use an external test to avoid os/exec -> net/http -> crypto/x509 -> os/exec
 // circular dependency on non-cgo darwin.
 
-package exec_test
+package lpenv_test
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/direnv/go-lpenv"
 )
 
 // TestHelperProcess isn't a real test. It's used as a helper process
@@ -38,7 +40,7 @@ func TestHelperProcess(*testing.T) {
 	cmd, args := args[0], args[1:]
 	switch cmd {
 	case "lookpath":
-		p, err := exec.LookPath(args[0])
+		p, err := lpenv.LookPath(args[0])
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "LookPath failed: %v\n", err)
 			os.Exit(1)

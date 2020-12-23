@@ -2,16 +2,17 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package exec_test
+package lpenv_test
 
 import (
 	"fmt"
 	"log"
-	"os/exec"
+
+	"github.com/direnv/go-lpenv"
 )
 
 func ExampleLookPath() {
-	path, err := exec.LookPath("fortune")
+	path, err := lpenv.LookPath("fortune")
 	if err != nil {
 		log.Fatal("installing fortune is in your future")
 	}
