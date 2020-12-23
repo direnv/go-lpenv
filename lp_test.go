@@ -13,18 +13,18 @@ var nonExistentPaths = []string{
 	"non-existent-path/slashed",
 }
 
-func TestLookPathNotFound(t *testing.T) {
+func TestLookPathEnvNotFound(t *testing.T) {
 	for _, name := range nonExistentPaths {
-		path, err := LookPath(name)
+		path, err := LookPathEnv(name, []string{})
 		if err == nil {
-			t.Fatalf("LookPath found %q in $PATH", name)
+			t.Fatalf("LookPathEnv found %q in $PATH", name)
 		}
 		if path != "" {
-			t.Fatalf("LookPath path == %q when err != nil", path)
+			t.Fatalf("LookPathEnv path == %q when err != nil", path)
 		}
 		perr, ok := err.(*Error)
 		if !ok {
-			t.Fatal("LookPath error is not an exec.Error")
+			t.Fatal("LookPathEnv error is not an exec.Error")
 		}
 		if perr.Name != name {
 			t.Fatalf("want Error name %q, got %q", name, perr.Name)

@@ -7,12 +7,13 @@ package lpenv_test
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/direnv/go-lpenv"
 )
 
-func ExampleLookPath() {
-	path, err := lpenv.LookPath("fortune")
+func ExampleLookPathEnv() {
+	path, err := lpenv.LookPathEnv("fortune", os.Environ())
 	if err != nil {
 		log.Fatal("installing fortune is in your future")
 	}

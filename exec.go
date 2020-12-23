@@ -24,7 +24,7 @@ import (
 	"strconv"
 )
 
-// Error is returned by LookPath when it fails to classify a file as an
+// Error is returned by LookPathEnv when it fails to classify a file as an
 // executable.
 type Error struct {
 	// Name is the file name for which the error occurred.

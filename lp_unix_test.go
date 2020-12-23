@@ -12,8 +12,8 @@ import (
 	"testing"
 )
 
-func TestLookPathUnixEmptyPath(t *testing.T) {
-	tmp, err := ioutil.TempDir("", "TestLookPathUnixEmptyPath")
+func TestLookPathEnvUnixEmptyPath(t *testing.T) {
+	tmp, err := ioutil.TempDir("", "TestLookPathEnvUnixEmptyPath")
 	if err != nil {
 		t.Fatal("TempDir failed: ", err)
 	}
@@ -37,19 +37,11 @@ func TestLookPathUnixEmptyPath(t *testing.T) {
 		t.Fatal("Close failed: ", err)
 	}
 
-	pathenv := os.Getenv("PATH")
-	defer os.Setenv("PATH", pathenv)
-
-	err = os.Setenv("PATH", "")
-	if err != nil {
-		t.Fatal("Setenv failed: ", err)
-	}
-
-	path, err := LookPath("exec_me")
+	path, err := LookPathEnv("exec_me", []string{})
 	if err == nil {
-		t.Fatal("LookPath found exec_me in empty $PATH")
+		t.Fatal("LookPathEnv found exec_me in empty $PATH")
 	}
 	if path != "" {
-		t.Fatalf("LookPath path == %q when err != nil", path)
+		t.Fatalf("LookPathEnv path == %q when err != nil", path)
 	}
 }

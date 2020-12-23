@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/direnv/go-lpenv"
 )
 
 func installExe(t *testing.T, dest, src string) {
@@ -137,12 +139,12 @@ func (test lookPathTest) run(t *testing.T, tmpdir, printpathExe string) {
 	// These will output their program paths when run.
 	should, errCmd := test.runProg(t, env, "cmd", "/c", test.searchFor)
 	// Run the lookpath program with new environment and work directory set.
-	have, errLP := test.runProg(t, env, os.Args[0], "-test.run=TestHelperProcess", "--", "lookpath", test.searchFor)
+	have, errLP := lpenv.LookPathEnv(test.searchFor, env)
 	// Compare results.
 	if errCmd == nil && errLP == nil {
 		// both succeeded
 		if should != have {
-			t.Fatalf("test=%+v failed: expected to find %q, but found %q", test, should, have)
+			t.Errorf("test=%+v failed: expected to find %q, but found %q", test, should, have)
 		}
 		return
 	}
@@ -151,10 +153,10 @@ func (test lookPathTest) run(t *testing.T, tmpdir, printpathExe string) {
 		return
 	}
 	if errCmd != nil {
-		t.Fatal(errCmd)
+		t.Error(errCmd)
 	}
 	if errLP != nil {
-		t.Fatal(errLP)
+		t.Error(errLP)
 	}
 }
 
@@ -304,8 +306,8 @@ var lookPathTests = []lookPathTest{
 	},
 }
 
-func TestLookPath(t *testing.T) {
-	tmp, err := ioutil.TempDir("", "TestLookPath")
+func TestLookPathEnv(t *testing.T) {
+	tmp, err := ioutil.TempDir("", "TestLookPathEnv")
 	if err != nil {
 		t.Fatal("TempDir failed: ", err)
 	}
@@ -338,7 +340,11 @@ func buildPrintPathExe(t *testing.T, dir string) string {
 		t.Fatalf("failed to execute template: %v", err)
 	}
 	outname := name + ".exe"
-	cmd := exec.Command("go", "build", "-o", outname, srcname)
+	p, err := lpenv.LookPathEnv("go", os.Environ())
+	if err != nil {
+		t.Fatalf("could not find the Go executable")
+	}
+	cmd := exec.Command(p, "build", "-o", outname, srcname)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {

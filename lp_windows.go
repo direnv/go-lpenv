@@ -50,15 +50,15 @@ func findExecutable(file string, exts []string) (string, error) {
 	return "", os.ErrNotExist
 }
 
-// LookPath searches for an executable named file in the
+// LookPathEnv searches for an executable named file in the
 // directories named by the PATH environment variable.
 // If file contains a slash, it is tried directly and the PATH is not consulted.
-// LookPath also uses PATHEXT environment variable to match
+// LookPathEnv also uses PATHEXT environment variable to match
 // a suitable candidate.
 // The result may be an absolute path or a path relative to the current directory.
-func LookPath(file string) (string, error) {
+func LookPathEnv(file string, env []string) (string, error) {
 	var exts []string
-	x := os.Getenv(`PATHEXT`)
+	x := Getenv(`PATHEXT`, env)
 	if x != "" {
 		for _, e := range strings.Split(strings.ToLower(x), `;`) {
 			if e == "" {
@@ -83,7 +83,7 @@ func LookPath(file string) (string, error) {
 	if f, err := findExecutable(filepath.Join(".", file), exts); err == nil {
 		return f, nil
 	}
-	path := os.Getenv("path")
+	path := Getenv("path", env)
 	for _, dir := range filepath.SplitList(path) {
 		if f, err := findExecutable(filepath.Join(dir, file), exts); err == nil {
 			return f, nil
