@@ -9,7 +9,6 @@ package exec_test
 
 import (
 	"fmt"
-	"internal/testenv"
 	"io"
 	"io/ioutil"
 	"os"
@@ -138,7 +137,6 @@ func (test lookPathTest) run(t *testing.T, tmpdir, printpathExe string) {
 	// These will output their program paths when run.
 	should, errCmd := test.runProg(t, env, "cmd", "/c", test.searchFor)
 	// Run the lookpath program with new environment and work directory set.
-	env = append(env, "GO_WANT_HELPER_PROCESS=1")
 	have, errLP := test.runProg(t, env, os.Args[0], "-test.run=TestHelperProcess", "--", "lookpath", test.searchFor)
 	// Compare results.
 	if errCmd == nil && errLP == nil {
@@ -326,203 +324,6 @@ func TestLookPath(t *testing.T) {
 	}
 }
 
-type commandTest struct {
-	PATH  string
-	files []string
-	dir   string
-	arg0  string
-	want  string
-	fails bool // test is expected to fail
-}
-
-func (test commandTest) isSuccess(rootDir, output string, err error) error {
-	if err != nil {
-		return fmt.Errorf("test=%+v: exec: %v %v", test, err, output)
-	}
-	path := output
-	if path[:len(rootDir)] != rootDir {
-		return fmt.Errorf("test=%+v: %q must have %q prefix", test, path, rootDir)
-	}
-	path = path[len(rootDir)+1:]
-	if path != test.want {
-		return fmt.Errorf("test=%+v: want %q, got %q", test, test.want, path)
-	}
-	return nil
-}
-
-func (test commandTest) runOne(rootDir string, env []string, dir, arg0 string) error {
-	cmd := exec.Command(os.Args[0], "-test.run=TestHelperProcess", "--", "exec", dir, arg0)
-	cmd.Dir = rootDir
-	cmd.Env = env
-	output, err := cmd.CombinedOutput()
-	err = test.isSuccess(rootDir, string(output), err)
-	if (err != nil) != test.fails {
-		if test.fails {
-			return fmt.Errorf("test=%+v: succeeded, but expected to fail", test)
-		}
-		return err
-	}
-	return nil
-}
-
-func (test commandTest) run(t *testing.T, rootDir, printpathExe string) {
-	createFiles(t, rootDir, test.files, printpathExe)
-	PATHEXT := `.COM;.EXE;.BAT`
-	env := createEnv(rootDir, test.PATH, PATHEXT)
-	env = append(env, "GO_WANT_HELPER_PROCESS=1")
-	err := test.runOne(rootDir, env, test.dir, test.arg0)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-var commandTests = []commandTest{
-	// testing commands with no slash, like `a.exe`
-	{
-		// should find a.exe in current directory
-		files: []string{`a.exe`},
-		arg0:  `a.exe`,
-		want:  `a.exe`,
-	},
-	{
-		// like above, but add PATH in attempt to break the test
-		PATH:  `p2;p`,
-		files: []string{`a.exe`, `p\a.exe`, `p2\a.exe`},
-		arg0:  `a.exe`,
-		want:  `a.exe`,
-	},
-	{
-		// like above, but use "a" instead of "a.exe" for command
-		PATH:  `p2;p`,
-		files: []string{`a.exe`, `p\a.exe`, `p2\a.exe`},
-		arg0:  `a`,
-		want:  `a.exe`,
-	},
-	// testing commands with slash, like `.\a.exe`
-	{
-		// should find p\a.exe
-		files: []string{`p\a.exe`},
-		arg0:  `p\a.exe`,
-		want:  `p\a.exe`,
-	},
-	{
-		// like above, but adding `.` in front of executable should still be OK
-		files: []string{`p\a.exe`},
-		arg0:  `.\p\a.exe`,
-		want:  `p\a.exe`,
-	},
-	{
-		// like above, but with PATH added in attempt to break it
-		PATH:  `p2`,
-		files: []string{`p\a.exe`, `p2\a.exe`},
-		arg0:  `p\a.exe`,
-		want:  `p\a.exe`,
-	},
-	{
-		// like above, but make sure .exe is tried even for commands with slash
-		PATH:  `p2`,
-		files: []string{`p\a.exe`, `p2\a.exe`},
-		arg0:  `p\a`,
-		want:  `p\a.exe`,
-	},
-	// tests commands, like `a.exe`, with c.Dir set
-	{
-		// should not find a.exe in p, because LookPath(`a.exe`) will fail
-		files: []string{`p\a.exe`},
-		dir:   `p`,
-		arg0:  `a.exe`,
-		want:  `p\a.exe`,
-		fails: true,
-	},
-	{
-		// LookPath(`a.exe`) will find `.\a.exe`, but prefixing that with
-		// dir `p\a.exe` will refer to a non-existent file
-		files: []string{`a.exe`, `p\not_important_file`},
-		dir:   `p`,
-		arg0:  `a.exe`,
-		want:  `a.exe`,
-		fails: true,
-	},
-	{
-		// like above, but making test succeed by installing file
-		// in referred destination (so LookPath(`a.exe`) will still
-		// find `.\a.exe`, but we successfully execute `p\a.exe`)
-		files: []string{`a.exe`, `p\a.exe`},
-		dir:   `p`,
-		arg0:  `a.exe`,
-		want:  `p\a.exe`,
-	},
-	{
-		// like above, but add PATH in attempt to break the test
-		PATH:  `p2;p`,
-		files: []string{`a.exe`, `p\a.exe`, `p2\a.exe`},
-		dir:   `p`,
-		arg0:  `a.exe`,
-		want:  `p\a.exe`,
-	},
-	{
-		// like above, but use "a" instead of "a.exe" for command
-		PATH:  `p2;p`,
-		files: []string{`a.exe`, `p\a.exe`, `p2\a.exe`},
-		dir:   `p`,
-		arg0:  `a`,
-		want:  `p\a.exe`,
-	},
-	{
-		// finds `a.exe` in the PATH regardless of dir set
-		// because LookPath returns full path in that case
-		PATH:  `p2;p`,
-		files: []string{`p\a.exe`, `p2\a.exe`},
-		dir:   `p`,
-		arg0:  `a.exe`,
-		want:  `p2\a.exe`,
-	},
-	// tests commands, like `.\a.exe`, with c.Dir set
-	{
-		// should use dir when command is path, like ".\a.exe"
-		files: []string{`p\a.exe`},
-		dir:   `p`,
-		arg0:  `.\a.exe`,
-		want:  `p\a.exe`,
-	},
-	{
-		// like above, but with PATH added in attempt to break it
-		PATH:  `p2`,
-		files: []string{`p\a.exe`, `p2\a.exe`},
-		dir:   `p`,
-		arg0:  `.\a.exe`,
-		want:  `p\a.exe`,
-	},
-	{
-		// like above, but make sure .exe is tried even for commands with slash
-		PATH:  `p2`,
-		files: []string{`p\a.exe`, `p2\a.exe`},
-		dir:   `p`,
-		arg0:  `.\a`,
-		want:  `p\a.exe`,
-	},
-}
-
-func TestCommand(t *testing.T) {
-	tmp, err := ioutil.TempDir("", "TestCommand")
-	if err != nil {
-		t.Fatal("TempDir failed: ", err)
-	}
-	defer os.RemoveAll(tmp)
-
-	printpathExe := buildPrintPathExe(t, tmp)
-
-	// Run all tests.
-	for i, test := range commandTests {
-		dir := filepath.Join(tmp, "d"+strconv.Itoa(i))
-		err := os.Mkdir(dir, 0700)
-		if err != nil {
-			t.Fatal("Mkdir failed: ", err)
-		}
-		test.run(t, dir, printpathExe)
-	}
-}
-
 // buildPrintPathExe creates a Go program that prints its own path.
 // dir is a temp directory where executable will be created.
 // The function returns full path to the created program.
@@ -537,7 +338,7 @@ func buildPrintPathExe(t *testing.T, dir string) string {
 		t.Fatalf("failed to execute template: %v", err)
 	}
 	outname := name + ".exe"
-	cmd := exec.Command(testenv.GoToolPath(t), "build", "-o", outname, srcname)
+	cmd := exec.Command("go", "build", "-o", outname, srcname)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
