@@ -44,7 +44,7 @@ func LookPathEnv(file string, cwd string, env []string) (string, error) {
 		}
 		return "", &Error{file, err}
 	}
-	path := Getenv("PATH", env)
+	path := Getenv(env, "PATH")
 	for _, dir := range filepath.SplitList(path) {
 		if dir == "" {
 			// Unix shell semantics: path element "" means "."

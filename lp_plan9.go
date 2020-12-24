@@ -45,7 +45,7 @@ func LookPathEnv(file string, cwd string, env []string) (string, error) {
 		}
 	}
 
-	path := Getenv("path", env)
+	path := Getenv(env, "path")
 	for _, dir := range filepath.SplitList(path) {
 		path := filepath.Join(dir, file)
 		if err := findExecutable(cwd, path); err == nil {

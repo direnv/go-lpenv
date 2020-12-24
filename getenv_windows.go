@@ -5,7 +5,7 @@ import "strings"
 // Getenv looks for the key in the given environment variables
 //
 // The Windows implementation is case-insensitive.
-func Getenv(key string, env []string) string {
+func Getenv(env []string, key string) string {
 	if len(key) == 0 {
 		return ""
 	}
