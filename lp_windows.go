@@ -33,7 +33,8 @@ func hasExt(file string) bool {
 	return strings.LastIndexAny(file, `:\/`) < i
 }
 
-func findExecutable(file string, exts []string) (string, error) {
+func findExecutable(cwd string, file string, exts []string) (string, error) {
+	file = JoinRel(cwd, file)
 	if len(exts) == 0 {
 		return file, chkStat(file)
 	}
@@ -56,7 +57,7 @@ func findExecutable(file string, exts []string) (string, error) {
 // LookPathEnv also uses PATHEXT environment variable to match
 // a suitable candidate.
 // The result may be an absolute path or a path relative to the current directory.
-func LookPathEnv(file string, env []string) (string, error) {
+func LookPathEnv(file string, cwd string, env []string) (string, error) {
 	var exts []string
 	x := Getenv(`PATHEXT`, env)
 	if x != "" {
@@ -74,18 +75,18 @@ func LookPathEnv(file string, env []string) (string, error) {
 	}
 
 	if strings.ContainsAny(file, `:\/`) {
-		if f, err := findExecutable(file, exts); err == nil {
+		if f, err := findExecutable(cwd, file, exts); err == nil {
 			return f, nil
 		} else {
 			return "", &Error{file, err}
 		}
 	}
-	if f, err := findExecutable(filepath.Join(".", file), exts); err == nil {
+	if f, err := findExecutable(cwd, file, exts); err == nil {
 		return f, nil
 	}
 	path := Getenv("path", env)
 	for _, dir := range filepath.SplitList(path) {
-		if f, err := findExecutable(filepath.Join(dir, file), exts); err == nil {
+		if f, err := findExecutable(cwd, filepath.Join(dir, file), exts); err == nil {
 			return f, nil
 		}
 	}

@@ -14,7 +14,8 @@ import (
 // ErrNotFound is the error resulting if a path search failed to find an executable file.
 var ErrNotFound = errors.New("executable file not found in $path")
 
-func findExecutable(file string) error {
+func findExecutable(cwd, file string) error {
+	file = JoinRel(cwd, file)
 	d, err := os.Stat(file)
 	if err != nil {
 		return err
@@ -30,13 +31,13 @@ func findExecutable(file string) error {
 // If file begins with "/", "#", "./", or "../", it is tried
 // directly and the path is not consulted.
 // The result may be an absolute path or a path relative to the current directory.
-func LookPathEnv(file string, env []string) (string, error) {
+func LookPathEnv(file string, cwd string, env []string) (string, error) {
 	// skip the path lookup for these prefixes
 	skip := []string{"/", "#", "./", "../"}
 
 	for _, p := range skip {
 		if strings.HasPrefix(file, p) {
-			err := findExecutable(file)
+			err := findExecutable(cwd, file)
 			if err == nil {
 				return file, nil
 			}
@@ -47,7 +48,7 @@ func LookPathEnv(file string, env []string) (string, error) {
 	path := Getenv("path", env)
 	for _, dir := range filepath.SplitList(path) {
 		path := filepath.Join(dir, file)
-		if err := findExecutable(path); err == nil {
+		if err := findExecutable(cwd, path); err == nil {
 			return path, nil
 		}
 	}

@@ -133,7 +133,7 @@ func (test lookPathTest) run(t *testing.T, tmpdir, printpathExe string) {
 	// These will output their program paths when run.
 	should, errCmd := test.runProg(t, env, "cmd", "/c", test.searchFor)
 	// Run the lookpath program with new environment and work directory set.
-	have, errLP := lpenv.LookPathEnv(test.searchFor, env)
+	have, errLP := lpenv.LookPathEnv(test.searchFor, test.rootDir, env)
 	// Compare results.
 	if errCmd == nil && errLP == nil {
 		// both succeeded
@@ -334,7 +334,11 @@ func buildPrintPathExe(t *testing.T, dir string) string {
 		t.Fatalf("failed to execute template: %v", err)
 	}
 	outname := name + ".exe"
-	p, err := lpenv.LookPathEnv("go", os.Environ())
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to find current workind directory: %v", err)
+	}
+	p, err := lpenv.LookPathEnv("go", cwd, os.Environ())
 	if err != nil {
 		t.Fatalf("could not find the Go executable")
 	}

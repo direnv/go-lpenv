@@ -13,7 +13,11 @@ import (
 )
 
 func ExampleLookPathEnv() {
-	path, err := lpenv.LookPathEnv("fortune", os.Environ())
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal("could not find current working directory")
+	}
+	path, err := lpenv.LookPathEnv("fortune", cwd, os.Environ())
 	if err != nil {
 		log.Fatal("installing fortune is in your future")
 	}

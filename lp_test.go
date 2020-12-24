@@ -15,7 +15,7 @@ var nonExistentPaths = []string{
 
 func TestLookPathEnvNotFound(t *testing.T) {
 	for _, name := range nonExistentPaths {
-		path, err := LookPathEnv(name, []string{})
+		path, err := LookPathEnv(name, ".", []string{})
 		if err == nil {
 			t.Fatalf("LookPathEnv found %q in $PATH", name)
 		}

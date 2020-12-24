@@ -37,7 +37,7 @@ func TestLookPathEnvUnixEmptyPath(t *testing.T) {
 		t.Fatal("Close failed: ", err)
 	}
 
-	path, err := LookPathEnv("exec_me", []string{})
+	path, err := LookPathEnv("exec_me", ".", []string{})
 	if err == nil {
 		t.Fatal("LookPathEnv found exec_me in empty $PATH")
 	}
